@@ -365,7 +365,7 @@ const Accounts = () => {
                       >
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="font-semibold text-lg">
-                            {admin.firstName} {admin.lastName}
+                            {admin.firstname} {admin.lastname}
                           </h3>
                           <button
                             onClick={() => handleDeleteAdmin(admin._id)}
