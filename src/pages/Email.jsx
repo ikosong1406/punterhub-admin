@@ -179,39 +179,6 @@ const EmailPage = () => {
             )}
           </button>
         </div>
-        
-        {/* Information Panel */}
-        <div className="bg-[#162821] rounded-lg p-4 md:p-6 shadow-lg">
-          <h2 className="text-xl font-semibold mb-4 text-[#18ffc8]">Recipient Information</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#376553] p-4 rounded-lg">
-              <h3 className="font-semibold text-[#fea92a] mb-2">All Users</h3>
-              <p className="text-sm">Sends email to all registered users in the system.</p>
-              <p className="text-xs mt-2 text-[#855391]">
-                {users.filter(user => user.type === 'user').length} users
-              </p>
-            </div>
-            
-            <div className="bg-[#376553] p-4 rounded-lg">
-              <h3 className="font-semibold text-[#fea92a] mb-2">All Punters</h3>
-              <p className="text-sm">Sends email to all punters in the system.</p>
-              <p className="text-xs mt-2 text-[#855391]">
-                {users.filter(user => user.type === 'punter').length} punters
-              </p>
-            </div>
-            
-            <div className="bg-[#376553] p-4 rounded-lg">
-              <h3 className="font-semibold text-[#fea92a] mb-2">Specific User</h3>
-              <p className="text-sm">Select an individual user to send a targeted email.</p>
-            </div>
-            
-            <div className="bg-[#376553] p-4 rounded-lg">
-              <h3 className="font-semibold text-[#fea92a] mb-2">Specific Punter</h3>
-              <p className="text-sm">Select an individual punter to send a targeted email.</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
