@@ -697,6 +697,10 @@ const TransactionsPage = () => {
                           Bank Details
                         </p>
                         <p style={{ color: colors.white }}>
+                          <strong>User Name:</strong>{" "}
+                          {selectedTransaction.details.userName}
+                        </p>
+                        <p style={{ color: colors.white }}>
                           <strong>Account Name:</strong>{" "}
                           {selectedTransaction.details.accountName}
                         </p>
@@ -705,8 +709,8 @@ const TransactionsPage = () => {
                           {selectedTransaction.details.accountNumber}
                         </p>
                         <p style={{ color: colors.white }}>
-                          <strong>Bank Code:</strong>{" "}
-                          {selectedTransaction.details.bankCode}
+                          <strong>Bank Name:</strong>{" "}
+                          {selectedTransaction.details.bankName}
                         </p>
                       </div>
                     )}
