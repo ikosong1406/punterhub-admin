@@ -41,37 +41,35 @@ const LoginScreen = ({ platformName = "PH" }) => {
 
     setLoading(true);
 
-    // try {
-    //   const response = await axios.post(`${Api}/client/login`, {
-    //     email: formData.email,
-    //     password: formData.password,
-    //   });
+    try {
+      const response = await axios.post(`${Api}/admin/login`, {
+        email: formData.email,
+        password: formData.password,
+      });
 
-    //   if (response.status === 200) {
-    //     const { token } = response.data;
+      if (response.status === 200) {
+        const { token } = response.data;
 
-    //     await localforage.setItem("token", token);
-    //     toast.success("Login successful! Redirecting...", { duration: 2000 });
+        await localforage.setItem("token", token);
+        toast.success("Login successful! Redirecting...", { duration: 2000 });
 
-    //     setTimeout(() => {
-    //       navigate("/admin/dashboard");
-    //     }, 2000);
-    //   }
-    // } catch (error) {
-    //   console.error("Login failed:", error);
-    //   if (error.response) {
-    //     const errorMessage =
-    //       error.response.data.error ||
-    //       "Login failed. Please check your credentials.";
-    //     toast.error(errorMessage);
-    //   } else {
-    //     toast.error("An unexpected error occurred. Please check your network.");
-    //   }
-    // } finally {
-    //   setLoading(false);
-    // }
-
-    navigate("/admin/dashboard");
+        setTimeout(() => {
+          navigate("/admin/dashboard");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error.response) {
+        const errorMessage =
+          error.response.data.error ||
+          "Login failed. Please check your credentials.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("An unexpected error occurred. Please check your network.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

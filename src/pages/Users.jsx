@@ -4,20 +4,26 @@ import {
   FaIdCard,
   FaEnvelope,
   FaPhone,
-  FaMapMarkerAlt,
-  FaLock,
-  FaBars,
   FaTimes,
   FaFilter,
   FaSearch,
-  FaCog,
-  FaEllipsisV,
   FaEdit,
-  FaTrash,
-  FaEye,
+  FaUser,
+  FaPoundSign,
+  FaTags,
+  FaCheckCircle,
+  FaBan,
+  FaCheck,
+  FaTimes as FaTimesCircle,
+  FaCalendarAlt,
+  FaCreditCard,
+  FaStar,
+  FaCrown,
+  FaCoins,
+  FaShieldAlt,
 } from "react-icons/fa";
 import axios from "axios";
-import Api from "../components/Api"
+import Api from "../components/Api";
 
 const UsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -83,19 +89,24 @@ const UsersPage = () => {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         (user) =>
-          user.name.toLowerCase().includes(query) ||
+          user.firstname.toLowerCase().includes(query) ||
+          user.lastname.toLowerCase().includes(query) ||
           user.email.toLowerCase().includes(query) ||
-          user.location.toLowerCase().includes(query)
+          (user.bio && user.bio.toLowerCase().includes(query)) ||
+          (user.username && user.username.toLowerCase().includes(query))
       );
     }
 
     // Sort results
     if (sortConfig.key) {
       result.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const aValue = a[sortConfig.key] || "";
+        const bValue = b[sortConfig.key] || "";
+
+        if (aValue < bValue) {
           return sortConfig.direction === "ascending" ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (aValue > bValue) {
           return sortConfig.direction === "ascending" ? 1 : -1;
         }
         return 0;
@@ -126,7 +137,7 @@ const UsersPage = () => {
   const updateUserStatus = (newStatus) => {
     if (!selectedUser) return;
     const updatedUsers = users.map((user) =>
-      user.id === selectedUser.id ? { ...user, status: newStatus } : user
+      user._id === selectedUser._id ? { ...user, status: newStatus } : user
     );
     setUsers(updatedUsers);
     setSelectedUser({ ...selectedUser, status: newStatus });
@@ -148,6 +159,23 @@ const UsersPage = () => {
   const getSortIndicator = (key) => {
     if (sortConfig.key !== key) return null;
     return sortConfig.direction === "ascending" ? "↑" : "↓";
+  };
+
+  const renderUserInfoItem = (icon, title, value) => {
+    if (!value) return null;
+    return (
+      <div className="flex items-center gap-3">
+        {icon}
+        <div>
+          <p className="text-xs" style={{ color: colors.lightGray }}>
+            {title}
+          </p>
+          <p className="font-medium" style={{ color: colors.white }}>
+            {value}
+          </p>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -188,7 +216,6 @@ const UsersPage = () => {
             </h1>
           </div>
         </div>
-
         <div
           style={{ backgroundColor: colors.gray }}
           className="rounded-lg p-4 mb-6"
@@ -200,14 +227,13 @@ const UsersPage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Search users by name, email or location..."
+                placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-lg"
                 style={{ backgroundColor: colors.black, color: colors.white }}
               />
             </div>
-
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
               <div className="flex items-center gap-2">
                 <FaFilter style={{ color: colors.blue }} />
@@ -243,7 +269,6 @@ const UsersPage = () => {
             </div>
           </div>
         </div>
-
         <div
           style={{ backgroundColor: colors.gray }}
           className="rounded-lg overflow-hidden shadow-lg"
@@ -256,9 +281,9 @@ const UsersPage = () => {
             <div
               className="col-span-4 font-medium cursor-pointer flex items-center gap-1"
               style={{ color: colors.orange }}
-              onClick={() => handleSort("name")}
+              onClick={() => handleSort("firstname")}
             >
-              User {getSortIndicator("name")}
+              User {getSortIndicator("firstname")}
             </div>
             <div
               className="col-span-2 font-medium cursor-pointer flex items-center gap-1"
@@ -270,9 +295,9 @@ const UsersPage = () => {
             <div
               className="col-span-3 font-medium cursor-pointer flex items-center gap-1"
               style={{ color: colors.orange }}
-              onClick={() => handleSort("location")}
+              onClick={() => handleSort("bio")}
             >
-              Location {getSortIndicator("location")}
+              Bio {getSortIndicator("bio")}
             </div>
             <div
               className="col-span-1 font-medium"
@@ -281,13 +306,12 @@ const UsersPage = () => {
               Actions
             </div>
           </div>
-
           {/* Users List */}
           <div className="divide-y" style={{ borderColor: colors.lightGray }}>
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
                 <div
-                  key={user.id}
+                  key={user._id}
                   className="p-4 grid grid-cols-1 md:grid-cols-12 items-center cursor-pointer transition-all hover:bg-lightGray"
                   onClick={() => handleUserClick(user)}
                 >
@@ -326,188 +350,208 @@ const UsersPage = () => {
             )}
           </div>
         </div>
-
-        {/* User Detail Modal (Full Screen on Mobile) */}
+        {/* Updated User Detail Modal */}
         {isModalOpen && selectedUser && (
-          <div className="fixed inset-0 flex items-center justify-center p-4 z-50 transition-all duration-300 ease-in-out">
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
             <div
-              className="absolute inset-0 bg-black bg-opacity-75"
+              className="absolute inset-0 bg-black bg-opacity-80 backdrop-blur-sm"
               onClick={closeModal}
             ></div>
             <div
-              className="relative w-full h-full md:w-3/4 md:h-auto md:max-w-2xl rounded-none md:rounded-3xl overflow-y-auto shadow-2xl"
+              className="relative w-full h-full md:w-11/12 md:h-auto md:max-w-4xl rounded-lg md:rounded-xl overflow-y-auto shadow-2xl"
               style={{
-                border: isMobile ? "none" : `2px solid ${colors.gray}`,
-                backgroundColor: isMobile ? colors.black : colors.gray,
+                backgroundColor: colors.gray,
+                border: `1px solid ${colors.lightGray}`,
               }}
             >
-              <div className="p-6 h-full md:h-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h2
-                    className="text-xl font-bold"
-                    style={{ color: colors.orange }}
-                  >
-                    User Profile
-                  </h2>
-                  <button
-                    onClick={closeModal}
-                    className="hover:opacity-75 transition-opacity"
-                    style={{ color: colors.lightGray }}
-                  >
-                    <FaTimes size={20} />
-                  </button>
-                </div>
-
-                <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
-                  <div className="flex flex-col items-center">
-                    <FaUserCircle
-                      size={100}
-                      style={{
-                        color:
-                          selectedUser.role === "punter"
-                            ? colors.orange
-                            : colors.blue,
-                      }}
-                      className="mb-4"
-                    />
+              {/* Modal Header */}
+              <div className="sticky top-0 z-10 p-4 md:p-6 flex justify-between items-start border-b"
+                   style={{ backgroundColor: colors.gray, borderColor: colors.lightGray }}>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden flex items-center justify-center"
+                         style={{ border: `3px solid ${selectedUser.role === "punter" ? colors.orange : colors.blue}` }}>
+                      {selectedUser.profilePicture ? (
+                        <img src={selectedUser.profilePicture} alt="User Profile" className="w-full h-full object-cover"/>
+                      ) : (
+                        <FaUserCircle size={64} style={{ color: selectedUser.role === "punter" ? colors.orange : colors.blue }}/>
+                      )}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center"
+                         style={{ backgroundColor: getStatusColor(selectedUser.status), border: `2px solid ${colors.gray}` }}>
+                      {selectedUser.status === "active" && <FaCheck size={10} style={{ color: colors.black }} />}
+                      {selectedUser.status === "suspended" && <FaBan size={10} style={{ color: colors.black }} />}
+                      {selectedUser.status === "inactive" && <FaTimesCircle size={10} style={{ color: colors.black }} />}
+                    </div>
                   </div>
-
-                  <div className="flex-1 text-center md:text-left">
-                    <h3
-                      className="text-2xl font-semibold mb-1"
-                      style={{ color: colors.white }}
-                    >
-                      {selectedUser.name}
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold mb-1" style={{ color: colors.white }}>
+                      {selectedUser.firstname} {selectedUser.lastname}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2 py-1 rounded-md text-xs font-medium capitalize"
+                            style={{ 
+                              backgroundColor: selectedUser.role === "punter" ? colors.orange : colors.blue,
+                              color: colors.black
+                            }}>
+                        {selectedUser.role}
+                      </span>
+                      <p className="text-sm font-light" style={{ color: colors.lightGray }}>
+                        {selectedUser.username ? `@${selectedUser.username}` : "No username"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={closeModal} className="p-1 hover:opacity-75 transition-opacity rounded-full"
+                        style={{ backgroundColor: colors.black, color: colors.lightGray }}>
+                  <FaTimes size={18} />
+                </button>
+              </div>
+              
+              {/* Modal Content */}
+              <div className="p-4 md:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6">
+                  {/* Basic Information Card */}
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: colors.black }}>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"
+                        style={{ color: colors.orange }}>
+                      <FaUser className="text-sm" /> Basic Information
                     </h3>
-                    <span
-                      className="px-3 py-1 text-xs font-semibold rounded-full capitalize"
-                      style={{
-                        backgroundColor: getStatusColor(selectedUser.status),
-                        color: colors.black,
-                      }}
-                    >
-                      {selectedUser.status}
-                    </span>
-                  </div>
-                </div>
-
-                <div
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-4 rounded-lg"
-                  style={{ backgroundColor: colors.black }}
-                >
-                  <div className="flex items-center gap-3">
-                    <FaIdCard style={{ color: colors.lightGray }} />
-                    <div>
-                      <p className="text-xs" style={{ color: colors.lightGray }}>
-                        User ID
-                      </p>
-                      <p className="font-medium" style={{ color: colors.white }}>
-                        {selectedUser.id}
-                      </p>
+                    <div className="space-y-3">
+                      {renderUserInfoItem(<FaIdCard />, "User ID", selectedUser._id)}
+                      {renderUserInfoItem(<FaEnvelope />, "Email", selectedUser.email)}
+                      {renderUserInfoItem(<FaPhone />, "Phone", selectedUser.phonenumber)}
+                      {renderUserInfoItem(<FaCalendarAlt />, "Joined", new Date(selectedUser.createdAt).toLocaleDateString())}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <FaEnvelope style={{ color: colors.lightGray }} />
-                    <div>
-                      <p className="text-xs" style={{ color: colors.lightGray }}>
-                        Email
-                      </p>
-                      <p className="font-medium" style={{ color: colors.white }}>
-                        {selectedUser.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FaPhone style={{ color: colors.lightGray }} />
-                    <div>
-                      <p className="text-xs" style={{ color: colors.lightGray }}>
-                        Phone
-                      </p>
-                      <p className="font-medium" style={{ color: colors.white }}>
-                        {selectedUser.phone}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FaMapMarkerAlt style={{ color: colors.lightGray }} />
-                    <div>
-                      <p className="text-xs" style={{ color: colors.lightGray }}>
-                        Location
-                      </p>
-                      <p className="font-medium" style={{ color: colors.white }}>
-                        {selectedUser.location}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <FaLock style={{ color: colors.lightGray }} />
-                    <div>
-                      <p className="text-xs" style={{ color: colors.lightGray }}>
-                        Joined
-                      </p>
-                      <p className="font-medium" style={{ color: colors.white }}>
-                        {selectedUser.joined}
-                      </p>
+                  
+                  {/* Account Status Card */}
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: colors.black }}>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"
+                        style={{ color: colors.orange }}>
+                      <FaShieldAlt className="text-sm" /> Account Status
+                    </h3>
+                    <div className="space-y-3">
+                      {renderUserInfoItem(<FaCheckCircle />, "Account Verified", selectedUser.isVerified ? "Verified" : "Not Verified", 
+                         selectedUser.isVerified ? colors.blue : colors.pink)}
+                      {renderUserInfoItem(<FaPoundSign />, "Account Balance", `${selectedUser.balance?.toFixed(2) || "0.00"}`)}
                     </div>
                   </div>
                 </div>
 
-                <div
-                  className="pt-4 mt-6 border-t"
-                  style={{ borderColor: colors.lightGray }}
-                >
-                  <p
-                    className="text-sm mb-4 font-medium"
-                    style={{ color: colors.lightGray }}
-                  >
-                    Admin Actions
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {selectedUser.status !== "active" && (
-                      <button
-                        onClick={() => updateUserStatus("active")}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all hover:opacity-90"
-                        style={{
-                          backgroundColor: colors.blue,
-                          color: colors.black,
-                        }}
-                      >
-                        <FaEdit />
-                        Activate
-                      </button>
-                    )}
-                    {selectedUser.status !== "inactive" && (
-                      <button
-                        onClick={() => updateUserStatus("inactive")}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all hover:opacity-90"
-                        style={{
-                          backgroundColor: colors.lightGray,
-                          color: colors.white,
-                        }}
-                      >
-                        <FaEdit />
-                        Deactivate
-                      </button>
-                    )}
-                    {selectedUser.status !== "suspended" && (
-                      <button
-                        onClick={() => updateUserStatus("suspended")}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-medium transition-all hover:opacity-90"
-                        style={{
-                          backgroundColor: colors.pink,
-                          color: colors.black,
-                        }}
-                      >
-                        <FaTrash />
-                        Suspend
-                      </button>
-                    )}
-                  </div>
-                </div>
+                {selectedUser.role === "punter" && (
+                  <>
+                    {/* Punter Details Card */}
+                    <div className="p-4 rounded-lg mb-6" style={{ backgroundColor: colors.black }}>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"
+                          style={{ color: colors.orange }}>
+                        <FaStar className="text-sm" /> Punter Details
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {renderUserInfoItem(<FaTags />, "Primary Category", selectedUser.primaryCategory || "N/A")}
+                        {renderUserInfoItem(<FaTags />, "Secondary Category", selectedUser.secondaryCategory || "N/A")}
+                        {renderUserInfoItem(<FaCreditCard />, "Promo Code", selectedUser.promoCode || "N/A")}
+                      </div>
+                    </div>
+                    
+                    {/* Pricing Plans Card */}
+                    <div className="p-4 rounded-lg mb-6" style={{ backgroundColor: colors.black }}>
+                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"
+                          style={{ color: colors.orange }}>
+                        <FaCoins className="text-sm" /> Pricing Plans
+                      </h3>
+                      {selectedUser.pricingPlans ? (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(selectedUser.pricingPlans).map(([planName, planData]) => (
+                            planData.price > 0 && (
+                              <div key={planName} className="p-4 rounded-lg relative overflow-hidden group transition-all"
+                                   style={{ 
+                                     backgroundColor: colors.gray,
+                                     border: `1px solid ${colors.lightGray}`
+                                   }}>
+                                <div className="absolute top-0 right-0 w-16 h-16 flex items-center justify-center overflow-hidden">
+                                  <div className="absolute w-24 h-24 rotate-45 -translate-y-1/2 translate-x-1/2"
+                                       style={{ 
+                                         backgroundColor: planName === 'silver' ? colors.lightGray : 
+                                                         planName === 'gold' ? colors.orange : colors.blue
+                                       }}></div>
+                                  {planName === 'gold' && (
+                                    <FaCrown size={16} className="relative z-10" style={{ color: colors.black }} />
+                                  )}
+                                </div>
+                                <h4 className="font-bold text-lg capitalize mb-2 relative z-10"
+                                    style={{ 
+                                      color: planName === 'silver' ? colors.lightGray : 
+                                              planName === 'gold' ? colors.orange : colors.blue
+                                    }}>
+                                  {planName}
+                                </h4>
+                                <p className="text-2xl font-bold mb-3 relative z-10" style={{ color: colors.white }}>
+                                  £{planData.price}
+                                </p>
+                                <ul className="space-y-2 relative z-10">
+                                  {planData.offers.map((offer, index) => (
+                                    <li key={index} className="flex items-start gap-2 text-sm"
+                                        style={{ color: colors.lightGray }}>
+                                      <FaCheck size={12} className="mt-0.5 flex-shrink-0" 
+                                               style={{ color: colors.blue }} />
+                                      <span>{offer}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-center py-4" style={{ color: colors.lightGray }}>
+                          No pricing plans set up.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+                
+                {/* Action Buttons */}
+                {/* <div className="flex flex-wrap gap-3 justify-end pt-4 border-t"
+                     style={{ borderColor: colors.lightGray }}>
+                  <button className="px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                          style={{ backgroundColor: colors.black, color: colors.white, border: `1px solid ${colors.lightGray}` }}>
+                    <FaEdit size={14} /> Edit Profile
+                  </button>
+                  <button className="px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                          style={{ backgroundColor: colors.pink, color: colors.black }}>
+                    <FaBan size={14} /> Suspend Account
+                  </button>
+                  <button className="px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                          style={{ backgroundColor: colors.blue, color: colors.black }}>
+                    <FaCheckCircle size={14} /> Activate Account
+                  </button>
+                </div> */}
               </div>
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Updated renderUserInfoItem function with optional color parameter
+const renderUserInfoItem = (icon, title, value, valueColor) => {
+  if (!value) return null;
+  return (
+    <div className="flex items-center gap-3">
+      <div style={{ color: "#8c8c8c" }}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs" style={{ color: "#8c8c8c" }}>
+          {title}
+        </p>
+        <p className="font-medium truncate" style={{ color: valueColor || "#efefef" }}>
+          {value}
+        </p>
       </div>
     </div>
   );

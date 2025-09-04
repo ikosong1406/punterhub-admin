@@ -25,6 +25,8 @@ const TransactionsPage = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState(null);
 
   const colors = {
     black: "#09100d",
@@ -88,11 +90,14 @@ const TransactionsPage = () => {
       );
     }
 
-    // ✅ Always reverse to show newest first
-    result.reverse();
-
-    // ✅ Keep amount sorting if needed
-    if (sortBy === "amount") {
+    // Sort transactions
+    if (sortBy === "date") {
+      result.sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+      });
+    } else if (sortBy === "amount") {
       result.sort((a, b) =>
         sortOrder === "asc" ? a.amount - b.amount : b.amount - a.amount
       );
@@ -109,26 +114,46 @@ const TransactionsPage = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedTransaction(null);
+    setUpdateError(null);
   };
 
-  const handleStatusUpdate = (newStatus) => {
-    if (!selectedTransaction) return;
-    const updatedTransactions = transactions.map((transaction) =>
-      transaction._id === selectedTransaction._id
-        ? { ...transaction, status: newStatus }
-        : transaction
-    );
-    setTransactions(updatedTransactions);
-    setSelectedTransaction({ ...selectedTransaction, status: newStatus });
+  const handleStatusUpdate = async (newStatus) => {
+    if (!selectedTransaction || isUpdating) return;
+
+    setIsUpdating(true);
+    setUpdateError(null);
+
+    try {
+      // ✅ API call to update the transaction status
+      await axios.post(`${Api}/admin/transactionStatus`, {
+        id: selectedTransaction._id,
+        status: newStatus,
+      });
+
+      // ✅ Optimistically update the UI
+      const updatedTransactions = transactions.map((transaction) =>
+        transaction._id === selectedTransaction._id
+          ? { ...transaction, status: newStatus }
+          : transaction
+      );
+      setTransactions(updatedTransactions);
+      setSelectedTransaction({ ...selectedTransaction, status: newStatus });
+      closeModal();
+    } catch (err) {
+      console.error("Failed to update transaction status:", err);
+      setUpdateError("Failed to update status. Please try again.");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const toggleSort = (field) => {
-    if (field === "createdAt") return; // lock date sort to newest first
     if (sortBy === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(field);
-      setSortOrder("desc");
+      // ✅ Set default sort order for date to 'desc' (newest first)
+      setSortOrder(field === "date" ? "desc" : "asc");
     }
   };
 
@@ -139,6 +164,19 @@ const TransactionsPage = () => {
   const formatDate = (dateString) => {
     const d = new Date(dateString);
     return d.toLocaleString();
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "completed":
+        return colors.blue;
+      case "pending":
+        return colors.orange;
+      case "failed":
+        return colors.pink;
+      default:
+        return colors.white;
+    }
   };
 
   return (
@@ -198,11 +236,7 @@ const TransactionsPage = () => {
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    filterStatus === "all"
-                      ? `bg-blue text-black`
-                      : `bg-lightGray`
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm`}
                   style={{
                     backgroundColor:
                       filterStatus === "all" ? colors.blue : colors.lightGray,
@@ -213,11 +247,7 @@ const TransactionsPage = () => {
                   All
                 </button>
                 <button
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    filterStatus === "pending"
-                      ? `bg-orange text-black`
-                      : `bg-lightGray`
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm`}
                   style={{
                     backgroundColor:
                       filterStatus === "pending"
@@ -231,11 +261,7 @@ const TransactionsPage = () => {
                   Pending
                 </button>
                 <button
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    filterStatus === "completed"
-                      ? `bg-blue text-black`
-                      : `bg-lightGray`
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm`}
                   style={{
                     backgroundColor:
                       filterStatus === "completed"
@@ -251,22 +277,18 @@ const TransactionsPage = () => {
                   Completed
                 </button>
                 <button
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    filterStatus === "rejected"
-                      ? `bg-pink text-black`
-                      : `bg-lightGray`
-                  }`}
+                  className={`px-3 py-1 rounded-full text-sm`}
                   style={{
                     backgroundColor:
-                      filterStatus === "rejected"
+                      filterStatus === "failed"
                         ? colors.pink
                         : colors.lightGray,
                     color:
-                      filterStatus === "rejected" ? colors.black : colors.white,
+                      filterStatus === "failed" ? colors.black : colors.white,
                   }}
-                  onClick={() => setFilterStatus("rejected")}
+                  onClick={() => setFilterStatus("failed")}
                 >
-                  Rejected
+                  Failed
                 </button>
               </div>
             </div>
@@ -300,10 +322,16 @@ const TransactionsPage = () => {
                     sortBy === "date" ? colors.purple : colors.lightGray,
                   color: colors.white,
                 }}
-                className={`px-3 py-1 rounded-full text-sm`}
+                className={`px-3 py-1 rounded-full text-sm flex items-center gap-1`}
                 onClick={() => toggleSort("date")}
               >
-                Date {sortBy === "date" && (sortOrder === "asc" ? "↑" : "↓")}
+                Date{" "}
+                {sortBy === "date" &&
+                  (sortOrder === "asc" ? (
+                    <FaChevronUp className="ml-1" />
+                  ) : (
+                    <FaChevronDown className="ml-1" />
+                  ))}
               </button>
               <button
                 style={{
@@ -311,11 +339,16 @@ const TransactionsPage = () => {
                     sortBy === "amount" ? colors.purple : colors.lightGray,
                   color: colors.white,
                 }}
-                className={`px-3 py-1 rounded-full text-sm`}
+                className={`px-3 py-1 rounded-full text-sm flex items-center gap-1`}
                 onClick={() => toggleSort("amount")}
               >
                 Amount{" "}
-                {sortBy === "amount" && (sortOrder === "asc" ? "↑" : "↓")}
+                {sortBy === "amount" &&
+                  (sortOrder === "asc" ? (
+                    <FaChevronUp className="ml-1" />
+                  ) : (
+                    <FaChevronDown className="ml-1" />
+                  ))}
               </button>
             </div>
           </div>
@@ -366,12 +399,7 @@ const TransactionsPage = () => {
                           <p
                             className="font-semibold"
                             style={{
-                              color:
-                                transaction.status === "completed"
-                                  ? colors.blue
-                                  : transaction.status === "pending"
-                                  ? colors.orange
-                                  : colors.pink,
+                              color: getStatusColor(transaction.status),
                             }}
                           >
                             ${transaction.amount.toFixed(1)}
@@ -379,12 +407,9 @@ const TransactionsPage = () => {
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs mt-1`}
                             style={{
-                              backgroundColor:
-                                transaction.status === "completed"
-                                  ? colors.blue
-                                  : transaction.status === "pending"
-                                  ? colors.orange
-                                  : colors.pink,
+                              backgroundColor: getStatusColor(
+                                transaction.status
+                              ),
                               color: colors.black,
                             }}
                           >
@@ -420,10 +445,19 @@ const TransactionsPage = () => {
                   <thead>
                     <tr style={{ backgroundColor: colors.lightGray }}>
                       <th
-                        className="px-4 md:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                        className="px-4 md:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer"
+                        onClick={() => toggleSort("date")}
                         style={{ color: colors.white }}
                       >
-                        Date (Newest First)
+                        <div className="flex items-center">
+                          <span>Date</span>
+                          {sortBy === "date" &&
+                            (sortOrder === "asc" ? (
+                              <FaChevronUp className="ml-1" />
+                            ) : (
+                              <FaChevronDown className="ml-1" />
+                            ))}
+                        </div>
                       </th>
                       <th
                         className="px-4 md:px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -523,12 +557,9 @@ const TransactionsPage = () => {
                           <span
                             className={`px-2 py-1 text-xs rounded-full`}
                             style={{
-                              backgroundColor:
-                                transaction.status === "completed"
-                                  ? colors.blue
-                                  : transaction.status === "pending"
-                                  ? colors.orange
-                                  : colors.pink,
+                              backgroundColor: getStatusColor(
+                                transaction.status
+                              ),
                               color: colors.black,
                             }}
                           >
@@ -573,6 +604,14 @@ const TransactionsPage = () => {
                     <FaTimes />
                   </button>
                 </div>
+                {updateError && (
+                  <div
+                    className="p-3 mb-4 rounded-lg text-center font-medium"
+                    style={{ backgroundColor: colors.pink, color: colors.black }}
+                  >
+                    {updateError}
+                  </div>
+                )}
                 <div className="space-y-4">
                   <div>
                     <h3
@@ -633,12 +672,9 @@ const TransactionsPage = () => {
                       <span
                         className={`px-2 py-1 text-xs rounded-full`}
                         style={{
-                          backgroundColor:
-                            selectedTransaction.status === "completed"
-                              ? colors.blue
-                              : selectedTransaction.status === "pending"
-                              ? colors.orange
-                              : colors.pink,
+                          backgroundColor: getStatusColor(
+                            selectedTransaction.status
+                          ),
                           color: colors.black,
                         }}
                       >
@@ -691,22 +727,26 @@ const TransactionsPage = () => {
                         <button
                           onClick={() => handleStatusUpdate("completed")}
                           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-medium"
+                          disabled={isUpdating}
                           style={{
                             backgroundColor: colors.blue,
                             color: colors.black,
+                            opacity: isUpdating ? 0.5 : 1,
                           }}
                         >
-                          <FaCheckCircle /> Approve
+                          <FaCheckCircle /> {isUpdating ? "Approving..." : "Approve"}
                         </button>
                         <button
-                          onClick={() => handleStatusUpdate("rejected")}
+                          onClick={() => handleStatusUpdate("failed")}
                           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-medium"
+                          disabled={isUpdating}
                           style={{
                             backgroundColor: colors.pink,
                             color: colors.black,
+                            opacity: isUpdating ? 0.5 : 1,
                           }}
                         >
-                          <FaTimesCircle /> Reject
+                          <FaTimesCircle /> {isUpdating ? "Rejecting..." : "Reject"}
                         </button>
                       </div>
                     </div>
