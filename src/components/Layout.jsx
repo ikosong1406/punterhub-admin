@@ -29,11 +29,11 @@ export default function Layout() {
       name: "Transact",
       icon: <FaMoneyBillTransfer size={20} />,
     },
-    // {
-    //   path: "/admin/kyc",
-    //   name: "Kyc",
-    //   icon: <MdVerifiedUser size={20} />,
-    // },
+    {
+      path: "/admin/kyc",
+      name: "Kyc",
+      icon: <MdVerifiedUser size={20} />,
+    },
     // {
     //   path: "/admin/email",
     //   name: "Email",

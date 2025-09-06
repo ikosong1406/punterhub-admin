@@ -1,74 +1,34 @@
-import React, { useState } from 'react';
-import { FaCheckCircle, FaTimesCircle, FaEye, FaUser, FaIdCard, FaClock, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaCheckCircle, FaTimesCircle, FaEye, FaUser, FaIdCard, FaClock, FaEnvelope, FaPhone, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
+import axios from 'axios'
+import Api from '../components/Api'; // Import the configured Axios instance
 
 const KYCPage = () => {
-  const [kycRequests, setKycRequests] = useState([
-    {
-      id: 1,
-      punterName: 'Michael Johnson',
-      punterEmail: 'michael.j@example.com',
-      punterPhone: '+1 (555) 123-4567',
-      punterAddress: '123 Main St, New York, NY 10001',
-      status: 'pending', // pending, approved, rejected
-      submissionDate: '2023-10-15',
-      idType: 'Driver License',
-      idNumber: 'DL123456789',
-      idFront: 'https://images.unsplash.com/photo-1586074299757-dc655f18518c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      idBack: 'https://images.unsplash.com/photo-1586074299757-dc655f18518c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      selfie: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      additionalNotes: 'ID expires on 2025-08-15'
-    },
-    {
-      id: 2,
-      punterName: 'Sarah Williams',
-      punterEmail: 'sarah.w@example.com',
-      punterPhone: '+1 (555) 987-6543',
-      punterAddress: '456 Oak Ave, Los Angeles, CA 90001',
-      status: 'pending',
-      submissionDate: '2023-10-18',
-      idType: 'Passport',
-      idNumber: 'P87654321',
-      idFront: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      idBack: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      selfie: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      additionalNotes: 'Passport issued in 2020'
-    },
-    {
-      id: 3,
-      punterName: 'David Brown',
-      punterEmail: 'david.b@example.com',
-      punterPhone: '+1 (555) 456-7890',
-      punterAddress: '789 Pine Rd, Chicago, IL 60007',
-      status: 'approved',
-      submissionDate: '2023-10-10',
-      idType: 'National ID',
-      idNumber: 'NID987654321',
-      idFront: 'https://images.unsplash.com/photo-1586074299757-dc655f18518c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      idBack: 'https://images.unsplash.com/photo-1586074299757-dc655f18518c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      selfie: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      additionalNotes: 'Verified on 2023-10-12'
-    },
-    {
-      id: 4,
-      punterName: 'Emma Thompson',
-      punterEmail: 'emma.t@example.com',
-      punterPhone: '+1 (555) 789-0123',
-      punterAddress: '321 Elm St, Miami, FL 33101',
-      status: 'rejected',
-      submissionDate: '2023-10-05',
-      idType: 'Driver License',
-      idNumber: 'DL456789123',
-      idFront: 'https://images.unsplash.com/photo-1586074299757-dc655f18518c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      idBack: 'https://images.unsplash.com/photo-1586074299757-dc655f18518c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      selfie: 'https://images.unsplash.com/photo-1554151228-14d9def656e4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80',
-      additionalNotes: 'ID image blurry, needs resubmission'
-    }
-  ]);
-
+  const [kycRequests, setKycRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedKYC, setSelectedKYC] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeImage, setActiveImage] = useState('front');
-  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, approved, rejected
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  // Fetch data from the real endpoint
+  useEffect(() => {
+    const getData = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${Api}/admin/getIdentifications`); // Endpoint to get all KYC requests
+        // Sort by createdAt date in reverse order
+        const sortedData = response.data.data.reverse();
+        setKycRequests(sortedData);
+      } catch (error) {
+        console.error('Failed to fetch KYC requests:', error);
+        // You can add state to show an error message to the user
+      } finally {
+        setLoading(false);
+      }
+    };
+    getData();
+  }, []);
 
   const openModal = (kyc) => {
     setSelectedKYC(kyc);
@@ -81,18 +41,21 @@ const KYCPage = () => {
     setSelectedKYC(null);
   };
 
-  const approveKYC = (id) => {
-    setKycRequests(kycRequests.map(kyc => 
-      kyc.id === id ? {...kyc, status: 'approved'} : kyc
-    ));
-    closeModal();
-  };
-
-  const rejectKYC = (id) => {
-    setKycRequests(kycRequests.map(kyc => 
-      kyc.id === id ? {...kyc, status: 'rejected'} : kyc
-    ));
-    closeModal();
+  // Function to handle status updates via API
+  const handleStatusUpdate = async (id, userId, newStatus) => {
+    try {
+      // Endpoint and data structure for updating a single KYC request
+      await api.patch(`/kyc/${id}`, { userId, status: newStatus }); 
+      
+      // Update the UI state to reflect the change
+      setKycRequests(prevRequests => prevRequests.map(kyc => 
+        kyc._id === id ? { ...kyc, status: newStatus } : kyc
+      ));
+      closeModal();
+    } catch (error) {
+      console.error('Failed to update KYC status:', error);
+      // Handle error, e.g., show a toast notification
+    }
   };
 
   const filteredRequests = kycRequests.filter(kyc => 
@@ -161,16 +124,20 @@ const KYCPage = () => {
         <div className="bg-[#162821] rounded-lg p-4 md:p-6 shadow-lg">
           <h2 className="text-xl font-semibold mb-4 text-[#18ffc8]">KYC Requests</h2>
           
-          {filteredRequests.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center items-center py-8 text-[#18ffc8]">
+              <FaSpinner className="animate-spin mr-2" size={24} /> Loading requests...
+            </div>
+          ) : filteredRequests.length === 0 ? (
             <p className="text-center py-8 text-[#855391]">No KYC requests found.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredRequests.map(kyc => (
-                <div key={kyc.id} className="bg-[#376553] rounded-lg p-4 hover:bg-[#458067] transition-colors cursor-pointer" onClick={() => openModal(kyc)}>
+                <div key={kyc._id} className="bg-[#376553] rounded-lg p-4 hover:bg-[#458067] transition-colors cursor-pointer" onClick={() => openModal(kyc)}>
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="font-semibold text-lg flex items-center">
                       <FaUser className="mr-2 text-[#fea92a]" />
-                      {kyc.punterName}
+                      {kyc.userFullname}
                     </h3>
                     <span className={`px-3 py-1 rounded-full text-xs flex items-center ${getStatusClass(kyc.status)}`}>
                       {getStatusIcon(kyc.status)}
@@ -178,25 +145,10 @@ const KYCPage = () => {
                     </span>
                   </div>
                   
-                  <div className="mb-3">
-                    <p className="text-sm text-[#efefef]/80 flex items-center">
-                      <FaEnvelope className="mr-2" />
-                      {kyc.punterEmail}
-                    </p>
-                    <p className="text-sm text-[#efefef]/80 flex items-center mt-1">
-                      <FaPhone className="mr-2" />
-                      {kyc.punterPhone}
-                    </p>
-                  </div>
-                  
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="text-sm text-[#efefef]/80 flex items-center">
-                        <FaIdCard className="mr-2" />
-                        {kyc.idType}: {kyc.idNumber}
-                      </p>
                       <p className="text-xs text-[#855391] mt-1">
-                        Submitted on {kyc.submissionDate}
+                        Submitted on {new Date(kyc.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                     <button className="text-[#18ffc8] hover:text-[#15e5b0] p-2">
@@ -234,28 +186,28 @@ const KYCPage = () => {
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm text-[#efefef]/80">Full Name</p>
-                      <p className="font-medium">{selectedKYC.punterName}</p>
+                      <p className="font-medium">{selectedKYC.userFullname}</p>
                     </div>
                     
                     <div>
                       <p className="text-sm text-[#efefef]/80 flex items-center">
                         <FaEnvelope className="mr-2" /> Email Address
                       </p>
-                      <p className="font-medium">{selectedKYC.punterEmail}</p>
+                      <p className="font-medium">{selectedKYC.userEmail}</p>
                     </div>
                     
                     <div>
                       <p className="text-sm text-[#efefef]/80 flex items-center">
                         <FaPhone className="mr-2" /> Phone Number
                       </p>
-                      <p className="font-medium">{selectedKYC.punterPhone}</p>
+                      <p className="font-medium">{selectedKYC.userPhone}</p>
                     </div>
                     
                     <div>
                       <p className="text-sm text-[#efefef]/80 flex items-center">
                         <FaMapMarkerAlt className="mr-2" /> Address
                       </p>
-                      <p className="font-medium">{selectedKYC.punterAddress}</p>
+                      <p className="font-medium">{selectedKYC.userAddress}</p>
                     </div>
                     
                     <div>
@@ -270,7 +222,7 @@ const KYCPage = () => {
                     
                     <div>
                       <p className="text-sm text-[#efefef]/80">Submission Date</p>
-                      <p className="font-medium">{selectedKYC.submissionDate}</p>
+                      <p className="font-medium">{new Date(selectedKYC.createdAt).toLocaleDateString()}</p>
                     </div>
                     
                     {selectedKYC.additionalNotes && (
@@ -310,9 +262,9 @@ const KYCPage = () => {
                     
                     <div className="bg-[#376553] rounded-lg p-4 flex items-center justify-center h-64">
                       <img 
-                        src={activeImage === 'front' ? selectedKYC.idFront : 
-                             activeImage === 'back' ? selectedKYC.idBack : 
-                             selectedKYC.selfie} 
+                        src={activeImage === 'front' ? selectedKYC.idPhotos.front : 
+                              activeImage === 'back' ? selectedKYC.idPhotos.back : 
+                              selectedKYC.selfie} 
                         alt={activeImage === 'selfie' ? 'Selfie' : `ID ${activeImage} side`}
                         className="max-h-56 max-w-full object-contain"
                       />
@@ -322,7 +274,7 @@ const KYCPage = () => {
                   <div className="grid grid-cols-3 gap-2 mb-6">
                     <div className="bg-[#376553] rounded p-1">
                       <img 
-                        src={selectedKYC.idFront} 
+                        src={selectedKYC.idPhotos.front} 
                         alt="ID Front" 
                         className="h-16 w-full object-cover cursor-pointer"
                         onClick={() => setActiveImage('front')}
@@ -330,7 +282,7 @@ const KYCPage = () => {
                     </div>
                     <div className="bg-[#376553] rounded p-1">
                       <img 
-                        src={selectedKYC.idBack} 
+                        src={selectedKYC.idPhotos.back} 
                         alt="ID Back" 
                         className="h-16 w-full object-cover cursor-pointer"
                         onClick={() => setActiveImage('back')}
@@ -352,13 +304,13 @@ const KYCPage = () => {
               {selectedKYC.status === 'pending' && (
                 <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-[#376553]">
                   <button
-                    onClick={() => rejectKYC(selectedKYC.id)}
+                    onClick={() => handleStatusUpdate(selectedKYC._id, selectedKYC.userId, 'rejected')}
                     className="px-6 py-3 bg-[#f57cff] hover:bg-[#ff5ef9] text-[#09100d] font-semibold rounded transition-colors flex items-center"
                   >
                     <FaTimesCircle className="mr-2" /> Reject KYC
                   </button>
                   <button
-                    onClick={() => approveKYC(selectedKYC.id)}
+                    onClick={() => handleStatusUpdate(selectedKYC._id, selectedKYC.userId, 'approved')}
                     className="px-6 py-3 bg-[#18ffc8] hover:bg-[#15e5b0] text-[#09100d] font-semibold rounded transition-colors flex items-center"
                   >
                     <FaCheckCircle className="mr-2" /> Approve KYC
