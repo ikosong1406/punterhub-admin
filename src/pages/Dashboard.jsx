@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import {
   FaUsers,
-  FaChartLine,
   FaSignal,
-  FaMoneyBillWave,
   FaArrowUp,
   FaArrowDown,
+  FaCoins
 } from "react-icons/fa";
 import { Line, Bar } from "react-chartjs-2";
 import {
@@ -22,6 +21,7 @@ import {
 import axios from "axios";
 import logo from "../assets/logo1.png";
 import Api from "../components/Api";
+import logoImage from "../assets/logo2.png";
 
 ChartJS.register(
   CategoryScale,
@@ -167,7 +167,7 @@ const DashboardPage = () => {
               labels: revenueLabels,
               datasets: [
                 {
-                  label: "Revenue ($)",
+                  label: "Revenue",
                   data: revenueDataPoints,
                   borderColor: colors.orange,
                   backgroundColor: colors.orange,
@@ -243,7 +243,7 @@ const DashboardPage = () => {
             style={{ color: colors.white }}
           >
             {title === "Total Revenue"
-              ? `$${Number(value).toLocaleString()}`
+              ? `${Number(value).toLocaleString()}`
               : Number(value).toLocaleString()}
           </h2>
           <div className="flex items-center text-sm font-semibold">
@@ -264,11 +264,46 @@ const DashboardPage = () => {
 
   if (loading) {
     return (
-      <div
-        style={{ backgroundColor: colors.black }}
-        className="min-h-screen flex items-center justify-center text-white"
-      >
-        Loading dashboard data...
+      <div className="bg-[#09100d] flex flex-col items-center justify-center w-screen h-screen bg-cover bg-center text-center">
+        {/* Arcs + Logo */}
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative w-[15rem] h-[15rem] flex items-center justify-center">
+            {/* ... (Your SVG and logo JSX here) */}
+            <svg
+              className="absolute w-full h-full spin-slow"
+              viewBox="0 0 100 100"
+            >
+              <path
+                d="M50,0 A50,50 0 1,1 0,50"
+                fill="none"
+                stroke="#fea92a"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="glow-stroke"
+              />
+            </svg>
+            <svg
+              className="absolute w-[13rem] h-[13rem] spin-medium"
+              viewBox="0 0 100 100"
+            >
+              <path
+                d="M50,0 A50,50 0 1,1 0,50"
+                fill="none"
+                stroke="#855391"
+                strokeWidth="4"
+                strokeLinecap="round"
+                className="glow-stroke"
+              />
+            </svg>
+            <div className="relative flex items-center justify-center w-[10rem] h-[10rem] p-6 border-4 border-[#18ffc8] border-opacity-70 rounded-full animate-pulse">
+              <img
+                src={logoImage}
+                alt="Platform Logo"
+                className="max-w-full max-h-full"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -306,7 +341,7 @@ const DashboardPage = () => {
             title="Total Revenue"
             value={dashboardData.revenue.total}
             change={dashboardData.revenue.growth}
-            icon={<FaMoneyBillWave size={24} />}
+            icon={<FaCoins size={24} />}
             iconColor={colors.orange}
           />
           <StatCard

@@ -128,6 +128,8 @@ const TransactionsPage = () => {
       await axios.post(`${Api}/admin/transactionStatus`, {
         id: selectedTransaction._id,
         status: newStatus,
+        userId: selectedTransaction.user,
+        amount: Number(selectedTransaction.amount),
       });
 
       // ✅ Optimistically update the UI
@@ -168,7 +170,7 @@ const TransactionsPage = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "completed":
+      case "success":
         return colors.blue;
       case "pending":
         return colors.orange;
@@ -272,9 +274,9 @@ const TransactionsPage = () => {
                         ? colors.black
                         : colors.white,
                   }}
-                  onClick={() => setFilterStatus("completed")}
+                  onClick={() => setFilterStatus("success")}
                 >
-                  Completed
+                  Success
                 </button>
                 <button
                   className={`px-3 py-1 rounded-full text-sm`}
@@ -355,7 +357,7 @@ const TransactionsPage = () => {
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center" style={{ color: colors.lightGray }}>
+          <div className="p-8 text-center" style={{ color: colors.white }}>
             Loading transactions...
           </div>
         ) : error ? (
@@ -402,7 +404,7 @@ const TransactionsPage = () => {
                               color: getStatusColor(transaction.status),
                             }}
                           >
-                            ${transaction.amount.toFixed(1)}
+                            {transaction.amount.toFixed(1)}
                           </p>
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs mt-1`}
@@ -416,17 +418,6 @@ const TransactionsPage = () => {
                             {transaction.status}
                           </span>
                         </div>
-                      </div>
-                      <div className="mt-2 flex justify-between items-center">
-                        <span
-                          className="text-xs px-2 py-1 rounded"
-                          style={{
-                            backgroundColor: colors.black,
-                            color: colors.lightGray,
-                          }}
-                        >
-                          {transaction.type}
-                        </span>
                       </div>
                     </div>
                   ))
@@ -550,7 +541,7 @@ const TransactionsPage = () => {
                             className="text-sm font-medium"
                             style={{ color: colors.white }}
                           >
-                            ${transaction.amount.toFixed(1)}
+                            {transaction.amount.toFixed(1)}
                           </div>
                         </td>
                         <td className="px-4 md:px-6 py-4 whitespace-nowrap">
@@ -648,7 +639,7 @@ const TransactionsPage = () => {
                         className="font-semibold"
                         style={{ color: colors.white }}
                       >
-                        ${selectedTransaction.amount.toFixed(1)}
+                        {selectedTransaction.amount.toFixed(1)} = {selectedTransaction.amount * 100} NGN
                       </p>
                     </div>
                     <div>
@@ -721,15 +712,9 @@ const TransactionsPage = () => {
                       className="pt-4 border-t"
                       style={{ borderColor: colors.lightGray }}
                     >
-                      <p
-                        className="text-sm mb-2"
-                        style={{ color: colors.lightGray }}
-                      >
-                        Admin Actions
-                      </p>
                       <div className="flex space-x-3">
                         <button
-                          onClick={() => handleStatusUpdate("completed")}
+                          onClick={() => handleStatusUpdate("success")}
                           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-medium"
                           disabled={isUpdating}
                           style={{
